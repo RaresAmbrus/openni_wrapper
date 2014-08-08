@@ -50,8 +50,8 @@ OpenniWrapperNode::OpenniWrapperNode(ros::NodeHandle nh, ros::NodeHandle private
     for (size_t i=0; i<m_DevicesDefined;i++)
     {
         cout<<m_vCameraNamespace[i]<<endl;
-        ColorCallback* colorCB = new ColorCallback(nh, m_vCameraNamespace[i], true, false);
-        DepthCallback* depthCB = new DepthCallback(nh, m_vCameraNamespace[i], true, false);
+        ColorCallback* colorCB = new ColorCallback(private_nh, m_vCameraNamespace[i], true, false);
+        DepthCallback* depthCB = new DepthCallback(private_nh, m_vCameraNamespace[i], true, false);
 
         m_vDepthCallback.push_back(depthCB);
         m_vColorCallback.push_back(colorCB);

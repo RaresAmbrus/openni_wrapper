@@ -1,6 +1,7 @@
 #include "DepthCallback.h"
 
 #include <opencv2/core/core.hpp>
+#include <opencv2/core/eigen.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
@@ -35,6 +36,37 @@ DepthCallback::DepthCallback(ros::NodeHandle aRosNode, std::string camNamespace,
     saveOneFrame = false;
     saveFrameSequence = false;
 
+    undistortDepth = false;
+    m_Dddm = NULL;
+
+    cb = boost::bind(&DepthCallback::configCallback, this, _1, _2);
+    dr_srv.setCallback(cb);
+
+
+
+//    m_RosNode.param<bool>("correct_depth",undistortDepth, true);
+//    if (undistortDepth)
+//    {
+//        // initialize depth distortion model
+//        std::string aDistortionModelPath = std::string(getenv("HOME")) + std::string("/.ros/depth_distortion/distortion_model");
+//        ifstream modelExists(aDistortionModelPath);
+//        if (modelExists)
+//        {
+//            modelExists.close();
+//            m_Dddm = new clams::DiscreteDepthDistortionModel;
+//            m_Dddm->load(aDistortionModelPath);
+//            ROS_INFO_STREAM("Using CLAMS for depth correction.");
+//        }  else {
+
+//            ROS_INFO_STREAM("Cannot use CLAMS for depth corretion as the distortion model doesn't exist. "<<aDistortionModelPath);
+//            undistortDepth = false;
+//            m_Dddm = NULL;
+//        }
+
+
+//    } else {
+//        ROS_INFO_STREAM("Not using CLAMS for depth correction.");
+//    }
 
 }
 
@@ -57,6 +89,21 @@ void DepthCallback::analyzeFrame(const VideoFrameRef& frame)
     {
         imshow( "DepthWindow", image );
         waitKey(10);
+    }
+
+    if (undistortDepth && m_Dddm)
+    {
+        // use CLAMS to undistort depth image
+
+        // convert to CLAMS format
+        Eigen::Matrix<unsigned short, Eigen::Dynamic, Eigen::Dynamic> eigenImage;
+        cv2eigen(image, eigenImage);
+
+        // undistort
+        m_Dddm->undistort(&eigenImage);
+
+        // convert back to openCV
+        eigen2cv(eigenImage,image);
     }
 
 //    cout<<"New depth frame w: "<<frame.getWidth()<<"  h: "<<frame.getHeight()<<endl;
@@ -98,4 +145,36 @@ void DepthCallback::analyzeFrame(const VideoFrameRef& frame)
         m_RosCameraInfoPublisher.publish(camInfo);
     }
 
+}
+
+void DepthCallback::configCallback(openni_wrapper::dynamic_parametersConfig &config, uint32_t level)
+{
+//    ROS_INFO_STREAM("Dynamic reconfigure");
+    undistortDepth = config.correct_depth;
+    if (undistortDepth)
+    {
+        if (!m_Dddm)
+        {
+            // initialize depth distortion model
+            std::string aDistortionModelPath = std::string(getenv("HOME")) + std::string("/.ros/depth_distortion/distortion_model");
+            ifstream modelExists(aDistortionModelPath);
+            if (modelExists)
+            {
+                modelExists.close();
+                m_Dddm = new clams::DiscreteDepthDistortionModel;
+                m_Dddm->load(aDistortionModelPath);
+                ROS_INFO_STREAM("Initialized depth distortion model -> using CLAMS for depth correction.");
+            }  else {
+
+                ROS_INFO_STREAM("Cannot use CLAMS for depth corretion as the distortion model doesn't exist. "<<aDistortionModelPath);
+                undistortDepth = false;
+                m_Dddm = NULL;
+            }
+        } else {
+            ROS_INFO_STREAM("Using CLAMS for depth correction.");
+        }
+    } else {
+        ROS_INFO_STREAM("Not using CLAMS for depth correction.");
+        undistortDepth = false;
+    }
 }
