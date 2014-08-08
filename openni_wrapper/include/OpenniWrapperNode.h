@@ -11,6 +11,11 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+// Dynamic reconfigure includes.
+#include <dynamic_reconfigure/server.h>
+// Auto-generated from cfg/ directory.
+#include "openni_wrapper/dynamic_parametersConfig.h"
+
  #include "ros/ros.h"
 class OpenNIDeviceListener : public openni::OpenNI::DeviceConnectedListener,
                                     public openni::OpenNI::DeviceDisconnectedListener,
@@ -42,6 +47,7 @@ public:
 
     void initializeOpenni();
     void terminateOpenni();
+    void configCallback(openni_wrapper::dynamic_parametersConfig &config, uint32_t level);
 
 private:
     ros::NodeHandle m_nodeHandle;
@@ -59,6 +65,10 @@ private:
 
 
     const static int          openni_wrapper_max_devices;
+    bool                             m_bHwDepthRegister;
+
+    dynamic_reconfigure::Server<openni_wrapper::dynamic_parametersConfig> dr_srv;
+    dynamic_reconfigure::Server<openni_wrapper::dynamic_parametersConfig>::CallbackType cb;
 
 };
 

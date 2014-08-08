@@ -8,10 +8,6 @@
 
 #include <clams/discrete_depth_distortion_model.h>
 
-// Dynamic reconfigure includes.
-#include <dynamic_reconfigure/server.h>
-// Auto-generated from cfg/ directory.
-#include "openni_wrapper/dynamic_parametersConfig.h"
 
 class DepthCallback : public openni::VideoStream::NewFrameListener
 {
@@ -22,7 +18,7 @@ public:
     bool        saveOneFrame, saveFrameSequence, publishRosMessage, createCVWindow, undistortDepth;
     std::string m_CameraNamespace;
 
-    void configCallback(openni_wrapper::dynamic_parametersConfig &config, uint32_t level);
+    void setUndistortDepth(bool undistort_depth);
 
 private:
     openni::VideoFrameRef m_frame;
@@ -30,8 +26,6 @@ private:
     ros::Publisher        m_RosPublisher;
     ros::Publisher        m_RosCameraInfoPublisher;
     clams::DiscreteDepthDistortionModel*           m_Dddm;
-    dynamic_reconfigure::Server<openni_wrapper::dynamic_parametersConfig> dr_srv;
-    dynamic_reconfigure::Server<openni_wrapper::dynamic_parametersConfig>::CallbackType cb;
 
 };
 

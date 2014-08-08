@@ -39,35 +39,6 @@ DepthCallback::DepthCallback(ros::NodeHandle aRosNode, std::string camNamespace,
     undistortDepth = false;
     m_Dddm = NULL;
 
-    cb = boost::bind(&DepthCallback::configCallback, this, _1, _2);
-    dr_srv.setCallback(cb);
-
-
-
-//    m_RosNode.param<bool>("correct_depth",undistortDepth, true);
-//    if (undistortDepth)
-//    {
-//        // initialize depth distortion model
-//        std::string aDistortionModelPath = std::string(getenv("HOME")) + std::string("/.ros/depth_distortion/distortion_model");
-//        ifstream modelExists(aDistortionModelPath);
-//        if (modelExists)
-//        {
-//            modelExists.close();
-//            m_Dddm = new clams::DiscreteDepthDistortionModel;
-//            m_Dddm->load(aDistortionModelPath);
-//            ROS_INFO_STREAM("Using CLAMS for depth correction.");
-//        }  else {
-
-//            ROS_INFO_STREAM("Cannot use CLAMS for depth corretion as the distortion model doesn't exist. "<<aDistortionModelPath);
-//            undistortDepth = false;
-//            m_Dddm = NULL;
-//        }
-
-
-//    } else {
-//        ROS_INFO_STREAM("Not using CLAMS for depth correction.");
-//    }
-
 }
 
 void DepthCallback::onNewFrame(VideoStream& stream)
@@ -147,10 +118,15 @@ void DepthCallback::analyzeFrame(const VideoFrameRef& frame)
 
 }
 
-void DepthCallback::configCallback(openni_wrapper::dynamic_parametersConfig &config, uint32_t level)
+void DepthCallback::setUndistortDepth(bool undistort)
 {
 //    ROS_INFO_STREAM("Dynamic reconfigure");
-    undistortDepth = config.correct_depth;
+    if (undistortDepth == undistort)
+    {
+        return; // same value, nothing to do
+    }
+
+    undistortDepth = undistort;
     if (undistortDepth)
     {
         if (!m_Dddm)
