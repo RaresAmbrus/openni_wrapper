@@ -1,11 +1,13 @@
 <launch>
-  <arg name="camera"   			default="camera" />
-  <arg name="manager" 			default="manager_$(arg camera)" />
-  <arg name="rgb" 			default="$(arg camera)/rgb/image_raw" /> 
-  <arg name="depth" 			default="$(arg camera)/depth/image_raw" />
-  <arg name="rgb_camera_info" 		default="$(arg camera)/rgb/camera_info" /> 
-  <arg name="depth_camera_info" 	default="$(arg camera)/depth/camera_info" />  
-  <arg name="machine" 			default="$(arg machine)" />
+  <arg name="camera"   				default="camera" />
+  <arg name="manager" 				default="manager_$(arg camera)" />
+  <arg name="rgb" 				default="$(arg camera)/rgb/image_raw" /> 
+  <arg name="depth" 				default="$(arg camera)/depth/image_raw" />
+  <arg name="depth_hw_registered"		default="$(arg camera)/depth/hw_registered/image_raw" />
+  <arg name="rgb_camera_info" 			default="$(arg camera)/rgb/camera_info" /> 
+  <arg name="depth_camera_info" 		default="$(arg camera)/depth/camera_info" />  
+  <arg name="depth_hw_registered_camera_info" 	default="$(arg camera)/depth/hw_registered/camera_info" />  
+  <arg name="machine" 				default="$(arg machine)" />
 
   <!-- Nodelet manager for this pipeline -->
   <node machine="$(arg machine)" pkg="nodelet" type="nodelet" args="manager"
@@ -66,7 +68,7 @@
         respawn="$(arg respawn)">
 	<remap from="rgb/camera_info" to="$(arg rgb_camera_info)"/>
   	<remap from="rgb/image_rect_color" to="$(arg camera)/rgb/image_rect_color"/>    
-        <remap from="depth_registered/image_rect" to="$(arg camera)/depth/image_rect"/>    
+        <remap from="depth_registered/image_rect" to="$(arg camera)/depth_registered/image_rect"/>    
         <remap from="depth_registered/points" to="$(arg camera)/depth_registered/points"/>    
   </node>
 
@@ -81,6 +83,33 @@
 
     <param name="min_range" value="0.5" />
     <param name="max_range" value="4.0" />
+  </node>
+
+
+   <!-- HARDWARE REGISTRATION NODELETS -->
+
+  <node machine="$(arg machine)" pkg="nodelet" type="nodelet" name="rectify_depth_$(arg camera)_hw_reg"
+        args="load image_proc/rectify $(arg manager) --no-bond">
+   <remap from="image_mono"  to="$(arg depth_hw_registered)" />
+   <remap from="camera_info"  to="$(arg depth_hw_registered_camera_info)" /> 
+   <remap from="image_rect"  to="$(arg camera)/depth/hw_registered/image_rect" />
+  </node>
+
+  <node machine="$(arg machine)" pkg="nodelet" type="nodelet" name="metric_rect_$(arg camera)_hw_reg"
+        args="load depth_image_proc/convert_metric $(arg manager) --no-bond"
+        respawn="$(arg respawn)">
+    <remap from="image_raw" to="$(arg camera)/depth/hw_registered/image_rect" />
+    <remap from="image"     to="$(arg camera)/depth/hw_registered/image_rect_meters" />
+    <remap from="image_rect" to="$(arg camera)/depth/hw_registered/image_rect"/>
+  </node>
+  
+  <node machine="$(arg machine)" pkg="nodelet" type="nodelet" name="points_xyzrgb_depth_rgb_$(arg camera)_hw_registered"
+        args="load depth_image_proc/point_cloud_xyzrgb $(arg manager) --no-bond"
+        respawn="$(arg respawn)">
+	<remap from="rgb/camera_info" to="$(arg rgb_camera_info)"/>
+  	<remap from="rgb/image_rect_color" to="$(arg camera)/rgb/image_rect_color"/>    
+        <remap from="depth_registered/image_rect" to="$(arg camera)/depth/hw_registered/image_rect"/>    
+        <remap from="depth_registered/points" to="$(arg camera)/depth_registered/points"/>    
   </node>
 </launch>
 

@@ -33,10 +33,14 @@ DepthCallback::DepthCallback(ros::NodeHandle aRosNode, std::string camNamespace,
     m_RosPublisher = m_RosNode.advertise<sensor_msgs::Image>(string("/") + string (m_CameraNamespace)+string("/")+"depth/image_raw", 1000);
     m_RosCameraInfoPublisher = m_RosNode.advertise<sensor_msgs::CameraInfo>(string("/") + string (m_CameraNamespace)+string("/")+"depth/camera_info", 1000);
 
+    m_RosPublisherHwReg  = m_RosNode.advertise<sensor_msgs::Image>(string("/") + string (m_CameraNamespace)+string("/")+"depth/hw_registered/image_raw", 1000);
+    m_RosCameraInfoPublisherHwReg = m_RosNode.advertise<sensor_msgs::CameraInfo>(string("/") + string (m_CameraNamespace)+string("/")+"depth/hw_registered/camera_info", 1000);;
+
     saveOneFrame = false;
     saveFrameSequence = false;
 
     undistortDepth = false;
+    hardwareRegistration = true;
     m_Dddm = NULL;
 
 }
@@ -100,7 +104,12 @@ void DepthCallback::analyzeFrame(const VideoFrameRef& frame)
         rosImage.get()->header.frame_id=string("/") + string (m_CameraNamespace)+string("_rgb_optical_frame");
         rosImage.get()->encoding="16UC1";
         rosImage.get()->header.stamp = ros::Time::now();
-        m_RosPublisher.publish(rosImage);
+        if (!hardwareRegistration)
+        {
+            m_RosPublisher.publish(rosImage);
+        } else{
+            m_RosPublisherHwReg.publish(rosImage);
+        }
 
         sensor_msgs::CameraInfo camInfo;
         camInfo.width = frame.getWidth();
@@ -113,7 +122,13 @@ void DepthCallback::analyzeFrame(const VideoFrameRef& frame)
         camInfo.D.assign(&D[0], &D[0]+5);
         camInfo.header.frame_id = string("/") + string (m_CameraNamespace)+string("_rgb_optical_frame");
         camInfo.header.stamp = rosImage.get()->header.stamp;
-        m_RosCameraInfoPublisher.publish(camInfo);
+        if (!hardwareRegistration)
+        {
+            m_RosCameraInfoPublisher.publish(camInfo);
+        } else{
+            m_RosCameraInfoPublisherHwReg.publish(camInfo);
+        }
+
     }
 
 }
@@ -153,4 +168,9 @@ void DepthCallback::setUndistortDepth(bool undistort)
         ROS_INFO_STREAM("Not using CLAMS for depth correction.");
         undistortDepth = false;
     }
+}
+
+void DepthCallback::setHardwareRegistration(bool hwReg)
+{
+    hardwareRegistration = hwReg;
 }

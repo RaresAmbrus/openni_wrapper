@@ -26,8 +26,10 @@
     <arg name="manager" value="$(arg manager)_$(arg camera)" /> 
     <arg name="rgb" value="$(arg camera)/rgb/image_raw" /> 
     <arg name="depth" value="$(arg camera)/depth/image_raw" />
+    <arg name="depth_hw_registered" value="$(arg camera)/depth/hw_registered/image_raw" />
     <arg name="rgb_camera_info" value="$(arg camera)/rgb/camera_info" /> 
     <arg name="depth_camera_info" value="$(arg camera)/depth/camera_info" />  
+    <arg name="depth_hw_registered_camera_info" value="$(arg camera)/depth/hw_registered/camera_info" />  
     <arg name="machine"  value="$(arg machine)"/>
   </include>
 

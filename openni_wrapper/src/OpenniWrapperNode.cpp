@@ -249,6 +249,10 @@ void OpenniWrapperNode::configCallback(openni_wrapper::dynamic_parametersConfig 
         return; // same value, nothing to do
     }
     m_bHwDepthRegister = config.hw_depth_registration;
+    for (size_t i=0; i<m_vDepthCallback.size();i++)
+    {
+        m_vDepthCallback[i]->setHardwareRegistration(m_bHwDepthRegister);
+    }
 
     for (size_t i=0; i<m_DevicesDefined;i++)
     {
